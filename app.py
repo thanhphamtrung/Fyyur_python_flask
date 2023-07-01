@@ -36,6 +36,11 @@ venue_genre = db.Table('venue_genre',
                            'Venue.id'), primary_key=True),
                        db.Column('genre_id', db.Integer, db.ForeignKey('Genre.id'), primary_key=True))
 
+artist_genre = db.Table('artist_genre',
+                        db.Column('artist_id', db.Integer, db.ForeignKey(
+                            'Artist.id'), primary_key=True),
+                        db.Column('genre_id', db.Integer, db.ForeignKey('Genre.id'), primary_key=True))
+
 
 class Genre(db.Model):
     __tablename__ = 'Genre'
@@ -61,6 +66,7 @@ class Venue(db.Model):
     seeking_talent = db.Column(db.Boolean)
     seeking_description = db.Column(db.String(500))
 
+    # shows = db.relationship('Show', backref='artist', lazy=True)
     genres = db.relationship(
         'Genre', secondary=venue_genre, backref=db.backref('venues', lazy=True))
 
@@ -79,11 +85,33 @@ class Artist(db.Model):
     genres = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
+    # shows = db.relationship('Show', backref='artist', lazy=True)
+    genres = db.relationship(
+        'Genre', secondary=artist_genre, backref=db.backref('artists', lazy=True))
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
 # TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
 
+
+class Show(db.Model):
+    __tablename__ = 'Show'
+
+    id = db.Column(db.Integer, primary_key=True)
+    artist_id = db.Column(db.Integer, db.ForeignKey(
+        'Artist.id'), nullable=False)
+    venue_id = db.Column(db.Integer, db.ForeignKey(
+        'Venue.id'), nullable=False)
+    start_time = db.Column(db.DateTime, nullable=False,
+                           default=datetime.utcnow)
+    # show_type should be "past"/"upcoming"
+    show_type = db.Column(db.String(120))
+
+    # artist = db.relationship('Artist', backref=db.backref('shows', lazy=True))
+    # venue = db.relationship('Venue', backref=db.backref('shows', lazy=True))
+
+    def __repr__(self):
+        return f'<Show {self.id} {self.start_time}>'
 # ----------------------------------------------------------------------------#
 # Filters.
 # ----------------------------------------------------------------------------#
@@ -162,10 +190,37 @@ def show_venue(venue_id):
     # shows the venue page with the given venue_id
     # TODO: replace with real venue data from the venues table, using venue_id
     venue = Venue.query.filter(Venue.id == venue_id).all()[0]
+    artists = Artist.query.all()
+
     genres = Genre.query.join(venue_genre).join(
         Venue).filter(Venue.id == venue_id).all()
     genres = list(genres.name for genres in genres)
+
+    past_show = Show.query.filter_by(
+        venue_id=venue_id, show_type="past").all()
+    past_show_data = []
+    for show in past_show:
+        artist = Artist.query.get(show.artist_id)
+        past_show_data.append({
+            "artist_id": show.artist_id,
+            "artist_name": artist.name,
+            "artist_image_link": artist.image_link,
+            "start_time": str(show.start_time)
+        })
+    upcoming_show = Show.query.filter_by(
+        venue_id=venue_id, show_type="upcoming").all()
+    upcoming_show_data = []
+    for show in upcoming_show:
+        artist = Artist.query.get(show.artist_id)
+        upcoming_show_data.append({
+            "artist_id": show.artist_id,
+            "artist_name": artist.name,
+            "artist_image_link": artist.image_link,
+            "start_time": str(show.start_time)
+        })
+
     venue: Venue
+    past_show: Show
     data = {
         "id": venue.id,
         "name": venue.name,
@@ -179,15 +234,10 @@ def show_venue(venue_id):
         "seeking_talent": venue.seeking_talent,
         "seeking_description": venue.seeking_description,
         "image_link": venue.image_link,
-        "past_shows": [{
-            "artist_id": 4,
-            "artist_name": "Guns N Petals",
-            "artist_image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
-            "start_time": "2019-05-21T21:30:00.000Z"
-        }],
-        "upcoming_shows": [],
-        "past_shows_count": 1,
-        "upcoming_shows_count": 0,
+        "past_shows": past_show_data,
+        "upcoming_shows": upcoming_show_data,
+        "past_shows_count": len(past_show),
+        "upcoming_shows_count": len(upcoming_show),
     }
 
     return render_template('pages/show_venue.html', venue=data)
