@@ -8,7 +8,7 @@ DEBUG = True
 
 # Connect to the database
 hostname = "localhost"
-database = "example"
+database = "fyyur_database"
 username = "postgres"
 port = "5432"
 
