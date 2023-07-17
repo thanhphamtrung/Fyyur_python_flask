@@ -1,9 +1,12 @@
 from datetime import datetime
-from app import db
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 
-# ----------------------------------------------------------------------------#
-# Models.
-# ----------------------------------------------------------------------------#
+
+app = Flask(__name__)
+db = SQLAlchemy()
+migrate = Migrate(app, db)
 
 
 class Venue(db.Model):
