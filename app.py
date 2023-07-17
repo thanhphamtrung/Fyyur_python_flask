@@ -14,6 +14,7 @@ from logging import Formatter, FileHandler
 from flask_wtf import Form
 from sqlalchemy import func
 from forms import *
+from flask import abort
 # ----------------------------------------------------------------------------#
 # App Config.
 # ----------------------------------------------------------------------------#
@@ -219,6 +220,7 @@ def create_venue_submission():
             flash('An error occurred. Venue ' +
                   request.form['name'] + ' could not be listed.')
             print(e)
+            abort(500)
         finally:
             with app.app_context():
                 db.session.close()
@@ -230,7 +232,7 @@ def create_venue_submission():
     return redirect(url_for('index'))
 
 
-@app.route('/venues/<venue_id>', methods=['DELETE'])
+@app.route('/venues/<int:venue_id>', methods=['DELETE'])
 def delete_venue(venue_id):
     try:
         venue = Venue.query.get(venue_id)
@@ -241,6 +243,7 @@ def delete_venue(venue_id):
         db.session.rollback()
         flash('An error occurred. Venue with ID ' +
               str(venue_id) + ' could not be deleted.')
+        abort(500)
     finally:
         db.session.close()
     return redirect(url_for('venues'))
@@ -419,6 +422,7 @@ def edit_venue_submission(venue_id):
         except Exception as e:
             db.session.rollback()
             print(e)
+            abort(500)
         finally:
             db.session.close()
     else:
@@ -469,6 +473,7 @@ def create_artist_submission():
             flash('An error occurred. Artist ' +
                   request.form['name'] + ' could not be listed.')
             print(e)
+            abort(500)
         finally:
             with app.app_context():
                 db.session.close()
@@ -540,6 +545,7 @@ def create_show_submission():
             flash('An error occurred. Show ' +
                   request.form['artist_id'] + ' could not be listed.')
             print(e)
+            abort(500)
         finally:
             with app.app_context():
                 db.session.close()
