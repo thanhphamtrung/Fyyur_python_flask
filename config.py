@@ -7,11 +7,14 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 DEBUG = True
 
 # Connect to the database
-hostname = "localhost"
-database = "fyyur_database"
-username = "postgres"
-port = "5432"
 
 
-# TODO IMPLEMENT DATABASE URL
-SQLALCHEMY_DATABASE_URI = f'postgresql://{username}@{hostname}:{port}/{database}'
+class DatabaseURI:
+
+    # Just change the names of your database and crendtials and all to connect to your local system
+    DATABASE_NAME = "postgresql"
+    username = 'postgres'
+    password = 'postgres'
+    url = 'localhost:5432'
+    SQLALCHEMY_DATABASE_URI = "postgres://{}:{}@{}/{}".format(
+        username, password, url, DATABASE_NAME)
