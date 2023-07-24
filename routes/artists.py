@@ -9,15 +9,18 @@ artists_bp = Blueprint('artists_bp', __name__)
 
 @artists_bp.route('/artists')
 def artists():
-    artists = Artist.query.all()
-
     data = []
-    artist: Artist
-    for artist in artists:
+
+    artists_data = db.session.query(Artist, func.count(Show.id)).outerjoin(
+        Show).filter(Show.start_time > datetime.now()).group_by(Artist).all()
+
+    for artist, num_upcoming_shows in artists_data:
         data.append({
             "id": artist.id,
             "name": artist.name,
+            "num_upcoming_shows": num_upcoming_shows
         })
+
     return render_template('pages/artists.html', artists=data)
 
 
@@ -49,9 +52,9 @@ def search_artists():
 def show_artist(artist_id):
     artist = db.session.get(Artist, artist_id)
 
-    upcoming_shows = Show.query.filter(
+    upcoming_shows = db.session.query(Venue, Show).join(Show).filter(
         Show.artist_id == artist_id, Show.start_time > datetime.now()).all()
-    past_shows = Show.query.filter(
+    past_shows = db.session.query(Venue, Show).join(Show).filter(
         Show.artist_id == artist_id, Show.start_time <= datetime.now()).all()
 
     artist: Artist
@@ -67,8 +70,18 @@ def show_artist(artist_id):
         "seeking_venue": artist.seeking_venue,
         "seeking_description": artist.seeking_description,
         "image_link": artist.image_link,
-        "past_shows": past_shows,
-        "upcoming_shows": upcoming_shows,
+        "past_shows": [{
+            "venue_id": venue.id,
+            "venue_name": venue.name,
+            "venue_image_link": venue.image_link,
+            "start_time": show.start_time.strftime("%m/%d/%Y, %H:%M")
+        } for venue, show in past_shows],
+        "upcoming_shows": [{
+            "venue_id": venue.id,
+            "venue_name": venue.name,
+            "venue_image_link": venue.image_link,
+            "start_time": show.start_time.strftime("%m/%d/%Y, %H:%M")
+        } for venue, show in upcoming_shows],
         "past_shows_count": len(past_shows),
         "upcoming_shows_count": len(upcoming_shows),
     }

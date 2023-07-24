@@ -55,7 +55,7 @@ def show_venue(venue_id):
     upcoming_shows = db.session.query(Artist, Show).join(Show).join(Venue).filter(
         Show.venue_id == venue_id,
         Show.artist_id == Artist.id,
-        Show.start_time < datetime.now()
+        Show.start_time > datetime.now()
     ).all()
 
     past_shows = db.session.query(Artist, Show).join(Show).join(Venue).filter(

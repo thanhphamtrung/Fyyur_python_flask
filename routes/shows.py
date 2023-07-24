@@ -45,7 +45,6 @@ def create_show_submission():
     if form.validate():
         try:
             new_show = Show(
-                id=form.artist_id.data,
                 venue_id=form.venue_id.data,
                 artist_id=form.artist_id.data,
                 start_time=form.start_time.data
